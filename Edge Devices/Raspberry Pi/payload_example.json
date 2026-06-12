@@ -1,7 +1,7 @@
 {
   "measurement": "sensor_data",
   "tags": {
-    "ID": "esp8266"
+    "ID": "esp32"
   },
   "time": "%lu", # long unsigned int
   "fields": {
