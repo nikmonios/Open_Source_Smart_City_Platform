@@ -1,32 +1,33 @@
 {
   "flowContents": {
     "identifier": "a1b2c3d4-0001-0001-0001-000000000001",
-    "name": "MQTT to InfluxDB 1.8",
-    "comments": "Replicates telegraf: subscribes to MQTT topic 'sensor' on edgex-mqtt-broker:1883, parses JSON payload, writes to remote InfluxDB 1.8 database 'sensordata'.",
+    "name": "MQTT (TLS) to InfluxDB 1.8",
+    "comments": "Replicates telegraf: subscribes via TLS to MQTT topic 'sensor' on edgex-mqtt-broker:8883 (mutual TLS), parses JSON payload, writes to remote InfluxDB 1.8 database 'sensordata'.",
     "position": { "x": 0, "y": 0 },
     "processGroups": [],
     "remoteProcessGroups": [],
     "processors": [
       {
         "identifier": "a1b2c3d4-0001-0001-0001-000000000010",
-        "name": "ConsumeMQTT",
+        "name": "ConsumeMQTT (TLS)",
         "type": "org.apache.nifi.processors.mqtt.ConsumeMQTT",
         "bundle": {
           "group": "org.apache.nifi",
           "artifact": "nifi-mqtt-nar",
           "version": "1.27.0"
         },
-        "comments": "Subscribes to the 'sensor' topic on the local Mosquitto broker (edgex-mqtt-broker:1883). No auth required.",
+        "comments": "Subscribes to the 'sensor' topic on the local Mosquitto broker (edgex-mqtt-broker:8883) over mutual TLS, using the certificates referenced by the SSL Context Service controller service.",
         "position": { "x": 160, "y": 200 },
         "style": {},
         "properties": {
-          "Broker URI": "tcp://edgex-mqtt-broker:1883",
+          "Broker URI": "ssl://edgex-mqtt-broker:8883",
           "Client ID": "nifi-sensor-subscriber",
           "Topic Filter": "sensor",
           "Quality of Service(QoS)": "0",
           "Max Queue Size": "65536",
           "Username": null,
           "Password": null,
+          "SSL Context Service": "a1b2c3d4-0001-0001-0001-000000000050",
           "Connection Timeout (seconds)": "30",
           "Keep Alive Interval (seconds)": "60",
           "Last Will Topic": null,
@@ -219,11 +220,58 @@
           "font-size": "14px"
         },
         "zIndex": 0
+      },
+      {
+        "identifier": "label-0002",
+        "label": "⚠️  TLS: convert your existing ca.crt / client cert / client key (PEM) into client-keystore.p12 (client cert+key) and truststore.p12 (CA cert) using openssl/keytool, place them under the NiFi conf/certs volume, then set the matching filenames and passwords in the 'Mosquitto TLS - SSL Context Service' controller service.",
+        "position": { "x": 160, "y": 150 },
+        "width": 960,
+        "height": 80,
+        "style": {
+          "background-color": "#FFD700",
+          "font-size": "14px"
+        },
+        "zIndex": 0
       }
     ],
     "inputPorts": [],
     "outputPorts": [],
-    "variables": {}
+    "variables": {},
+    "controllerServices": [
+      {
+        "identifier": "a1b2c3d4-0001-0001-0001-000000000050",
+        "name": "Mosquitto TLS - SSL Context Service",
+        "type": "org.apache.nifi.ssl.StandardSSLContextService",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-ssl-context-service-nar",
+          "version": "1.27.0"
+        },
+        "comments": "Mutual TLS for ConsumeMQTT. Truststore must contain the mosquitto CA cert (ca.crt). Keystore must contain this device's client certificate + private key, bundled into a single PKCS12 file. REPLACE the filenames and passwords below with your actual values.",
+        "properties": {
+          "Keystore Filename": "/opt/nifi/nifi-current/conf/certs/client-keystore.p12",
+          "Keystore Password": "<KEYSTORE_PASSWORD>",
+          "Key Password": null,
+          "Keystore Type": "PKCS12",
+          "Truststore Filename": "/opt/nifi/nifi-current/conf/certs/truststore.p12",
+          "Truststore Password": "<TRUSTSTORE_PASSWORD>",
+          "Truststore Type": "PKCS12",
+          "TLS Protocol": "TLS"
+        },
+        "controllerServiceApis": [
+          {
+            "type": "org.apache.nifi.ssl.SSLContextService",
+            "bundle": {
+              "group": "org.apache.nifi",
+              "artifact": "nifi-standard-services-api-nar",
+              "version": "1.27.0"
+            }
+          }
+        ],
+        "scheduledState": "ENABLED",
+        "bulletinLevel": "WARN"
+      }
+    ]
   },
   "parameterContexts": [],
   "controllerServices": [],
