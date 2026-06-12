@@ -68,6 +68,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   core-command:
     command:
       - --registry
@@ -112,6 +113,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   core-common-config-bootstrapper:
     command:
       - /core-common-config-bootstrapper
@@ -144,6 +146,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   core-data:
     command:
       - --registry
@@ -184,6 +187,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   core-keeper:
     container_name: edgex-core-keeper
     depends_on:
@@ -222,6 +226,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   core-metadata:
     command:
       - --registry
@@ -259,6 +264,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   database:
     container_name: edgex-postgres
     environment:
@@ -291,6 +297,7 @@ services:
         source: db-data
         target: /var/lib/postgresql/data
         volume: {}
+
   device-rest:
     command:
       - -cp=keeper.http://edgex-core-keeper:59890
@@ -339,7 +346,7 @@ services:
     command:
       - /usr/sbin/mosquitto
       - -c
-      - /mosquitto-no-auth.conf
+      - /mosquitto/config/mosquitto.conf
     container_name: edgex-mqtt-broker
     hostname: edgex-mqtt-broker
     image: eclipse-mosquitto:2.0
@@ -347,11 +354,30 @@ services:
       edgex-network: null
     ports:
       - "1883:1883"
+      - "8883:8883"
     read_only: true
     restart: always
     security_opt:
       - no-new-privileges:true
     user: 2002:2001
+    volumes:
+      - type: bind
+        source: ./mosquitto/config
+        target: /mosquitto/config
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./mosquitto/data
+        target: /mosquitto/data
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./mosquitto/log
+        target: /mosquitto/log
+        bind:
+          create_host_path: true
+
   rules-engine:
     container_name: edgex-kuiper
     depends_on:
@@ -416,6 +442,7 @@ services:
         source: kuiper-plugins
         target: /kuiper/plugins
         volume: {}
+
   support-notifications:
     command:
       - --registry
@@ -456,6 +483,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   support-scheduler:
     command:
       - --registry
@@ -496,6 +524,7 @@ services:
         read_only: true
         bind:
           create_host_path: true
+
   ui:
     container_name: edgex-ui-go
     environment:
