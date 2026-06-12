@@ -1,0 +1,11 @@
+{
+  "measurement": "sensor_data",
+  "tags": {
+    "ID": "esp8266"
+  },
+  "time": "%lu", # long unsigned int
+  "fields": {
+    "Temperature": "%.1f", # float, 1 precision
+    "Humidity": "%.1f" # float, 1 precision
+  }
+}

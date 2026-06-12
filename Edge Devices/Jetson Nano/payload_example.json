@@ -1,0 +1,22 @@
+{
+	"measurement": "sensor_data",
+	"tags": {
+	  "ID": "%s" # string
+	},
+	"time": "%lu", # long unsigned int
+	"fields": {
+	  "temperature": "%.2f", # float 2 precision
+	  "humidity": "%.2f", # float 2 precision
+	  "pressure": "%.2f", # float 2 precision
+	  "proximity": "%ld", # long int
+	  "acc_x": "%d", # int
+	  "acc_y": "%d", # int
+	  "acc_z": "%d", # int
+	  "gyr_x": "%.0f", # float zero precision
+	  "gyr_y": "%.0f", # float zero precision
+	  "gyr_z": "%.0f", # float zero precision
+	  "mag_x": "%d", # int
+	  "mag_y": "%d", # int
+	  "mag_z": "%d" # int
+	}
+}

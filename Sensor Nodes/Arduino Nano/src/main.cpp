@@ -76,7 +76,7 @@ void loop() {
       char payload[124];
 
       snprintf(payload,
-        sizeof(payload), "{\"measurement\":\"sensor_data\", \"tags\":{\"ID\":\"esp8266\"}, \"time\": %lu, \"fields\":{\"Temperature\": %.1f,\"Humidity\": %.1f}}",
+        sizeof(payload), "{\"measurement\":\"sensor_data\", \"tags\":{\"ID\":\"esp32\"}, \"time\": %lu, \"fields\":{\"Temperature\": %.1f,\"Humidity\": %.1f}}",
         unixTime,
         temperature,
         humidity);

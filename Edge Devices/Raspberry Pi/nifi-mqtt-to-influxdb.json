@@ -1,0 +1,231 @@
+{
+  "flowContents": {
+    "identifier": "a1b2c3d4-0001-0001-0001-000000000001",
+    "name": "MQTT to InfluxDB 1.8",
+    "comments": "Replicates telegraf: subscribes to MQTT topic 'sensor' on edgex-mqtt-broker:1883, parses JSON payload, writes to remote InfluxDB 1.8 database 'sensordata'.",
+    "position": { "x": 0, "y": 0 },
+    "processGroups": [],
+    "remoteProcessGroups": [],
+    "processors": [
+      {
+        "identifier": "a1b2c3d4-0001-0001-0001-000000000010",
+        "name": "ConsumeMQTT",
+        "type": "org.apache.nifi.processors.mqtt.ConsumeMQTT",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-mqtt-nar",
+          "version": "1.27.0"
+        },
+        "comments": "Subscribes to the 'sensor' topic on the local Mosquitto broker (edgex-mqtt-broker:1883). No auth required.",
+        "position": { "x": 160, "y": 200 },
+        "style": {},
+        "properties": {
+          "Broker URI": "tcp://edgex-mqtt-broker:1883",
+          "Client ID": "nifi-sensor-subscriber",
+          "Topic Filter": "sensor",
+          "Quality of Service(QoS)": "0",
+          "Max Queue Size": "65536",
+          "Username": null,
+          "Password": null,
+          "Connection Timeout (seconds)": "30",
+          "Keep Alive Interval (seconds)": "60",
+          "Last Will Topic": null,
+          "Last Will QoS Level": "0",
+          "Last Will Message": null,
+          "Last Will Retain": "false"
+        },
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 2,
+        "autoTerminatedRelationships": []
+      },
+      {
+        "identifier": "a1b2c3d4-0001-0001-0001-000000000020",
+        "name": "EvaluateJsonPath – Extract fields",
+        "type": "org.apache.nifi.processors.standard.EvaluateJsonPath",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "1.27.0"
+        },
+        "comments": "Extracts measurement, tag ID, unix timestamp, Temperature, and Humidity from the JSON payload into FlowFile attributes.",
+        "position": { "x": 480, "y": 200 },
+        "style": {},
+        "properties": {
+          "Destination": "flowfile-attribute",
+          "Return Type": "auto-detect",
+          "Path Not Found Behavior": "warn",
+          "Null Value Representation": "",
+          "measurement":   "$.measurement",
+          "tag_id":        "$.tags.ID",
+          "ts":            "$.time",
+          "temperature":   "$.fields.Temperature",
+          "humidity":      "$.fields.Humidity"
+        },
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": ["failure"]
+      },
+      {
+        "identifier": "a1b2c3d4-0001-0001-0001-000000000030",
+        "name": "ReplaceText – Build InfluxDB Line Protocol",
+        "type": "org.apache.nifi.processors.standard.ReplaceText",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "1.27.0"
+        },
+        "comments": "Builds the InfluxDB line-protocol body from the extracted attributes. Format: measurement,tag=value field1=v1,field2=v2 timestamp",
+        "position": { "x": 800, "y": 200 },
+        "style": {},
+        "properties": {
+          "Replacement Strategy": "Always Replace",
+          "Evaluation Mode": "Entire text",
+          "Search Value": "(?s)(.*)",
+          "Replacement Value": "${measurement},ID=${tag_id} Temperature=${temperature},Humidity=${humidity} ${ts}",
+          "Maximum Buffer Size": "1 MB"
+        },
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 1,
+        "autoTerminatedRelationships": ["failure"]
+      },
+      {
+        "identifier": "a1b2c3d4-0001-0001-0001-000000000040",
+        "name": "InvokeHTTP – POST to InfluxDB Write API",
+        "type": "org.apache.nifi.processors.standard.InvokeHTTP",
+        "bundle": {
+          "group": "org.apache.nifi",
+          "artifact": "nifi-standard-nar",
+          "version": "1.27.0"
+        },
+        "comments": "POSTs the line-protocol body to the InfluxDB 1.8 /write endpoint. REPLACE <IP> and <PORT> with your remote InfluxDB address.",
+        "position": { "x": 1120, "y": 200 },
+        "style": {},
+        "properties": {
+          "Remote URL": "http://<IP>:<PORT>/write?db=sensordata&precision=s",
+          "HTTP Method": "POST",
+          "Request Content-Type": "text/plain; charset=utf-8",
+          "Basic Authentication Username": "root",
+          "Basic Authentication Password": "pass",
+          "Response Body Ignored": "true",
+          "Connection Timeout": "5 secs",
+          "Read Timeout": "5 secs",
+          "Max Buffer Size": "1 MB",
+          "Always Output Response": "false",
+          "Use Chunked Encoding": "false",
+          "Penalize on \"No Retry\"": "false",
+          "Follow Redirects": "true",
+          "Attributes to Send": null,
+          "Proxy Host": null,
+          "Proxy Port": null
+        },
+        "schedulingPeriod": "0 sec",
+        "schedulingStrategy": "TIMER_DRIVEN",
+        "executionNode": "ALL",
+        "penaltyDuration": "30 sec",
+        "yieldDuration": "1 sec",
+        "bulletinLevel": "WARN",
+        "runDurationMillis": 0,
+        "concurrentlySchedulableTaskCount": 4,
+        "autoTerminatedRelationships": ["Original", "Response", "Retry", "Failure", "No Retry"]
+      }
+    ],
+    "connections": [
+      {
+        "identifier": "conn-0001",
+        "name": "",
+        "source": {
+          "id": "a1b2c3d4-0001-0001-0001-000000000010",
+          "type": "PROCESSOR"
+        },
+        "destination": {
+          "id": "a1b2c3d4-0001-0001-0001-000000000020",
+          "type": "PROCESSOR"
+        },
+        "selectedRelationships": ["Message"],
+        "flowFileExpiration": "0 sec",
+        "backPressureDataSizeThreshold": "1 GB",
+        "backPressureObjectThreshold": 10000,
+        "labelIndex": 1,
+        "zIndex": 0,
+        "bends": []
+      },
+      {
+        "identifier": "conn-0002",
+        "name": "",
+        "source": {
+          "id": "a1b2c3d4-0001-0001-0001-000000000020",
+          "type": "PROCESSOR"
+        },
+        "destination": {
+          "id": "a1b2c3d4-0001-0001-0001-000000000030",
+          "type": "PROCESSOR"
+        },
+        "selectedRelationships": ["matched"],
+        "flowFileExpiration": "0 sec",
+        "backPressureDataSizeThreshold": "1 GB",
+        "backPressureObjectThreshold": 10000,
+        "labelIndex": 1,
+        "zIndex": 0,
+        "bends": []
+      },
+      {
+        "identifier": "conn-0003",
+        "name": "",
+        "source": {
+          "id": "a1b2c3d4-0001-0001-0001-000000000030",
+          "type": "PROCESSOR"
+        },
+        "destination": {
+          "id": "a1b2c3d4-0001-0001-0001-000000000040",
+          "type": "PROCESSOR"
+        },
+        "selectedRelationships": ["success"],
+        "flowFileExpiration": "0 sec",
+        "backPressureDataSizeThreshold": "1 GB",
+        "backPressureObjectThreshold": 10000,
+        "labelIndex": 1,
+        "zIndex": 0,
+        "bends": []
+      }
+    ],
+    "funnels": [],
+    "labels": [
+      {
+        "identifier": "label-0001",
+        "label": "⚠️  Before starting: replace <IP> and <PORT> in InvokeHTTP with your remote InfluxDB address.",
+        "position": { "x": 160, "y": 80 },
+        "width": 800,
+        "height": 60,
+        "style": {
+          "background-color": "#FFD700",
+          "font-size": "14px"
+        },
+        "zIndex": 0
+      }
+    ],
+    "inputPorts": [],
+    "outputPorts": [],
+    "variables": {}
+  },
+  "parameterContexts": [],
+  "controllerServices": [],
+  "encodingVersion": "1.4"
+}
