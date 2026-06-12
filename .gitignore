@@ -1,0 +1,29 @@
+# Build output directories
+Debug/
+Release/
+build/
+
+Debug\
+Release\
+build\
+
+# IDE / tool directories
+.vscode/
+.pio/
+.settings/
+
+.vscode\
+.pio\
+.settings\
+
+# Compiler/linker intermediate files
+*.d
+*.o
+*.su
+*.cyclo
+*.mk
+*.icf
+
+# Backup files (only if these are actually local backups you create)
+.cproject_org
+.project_org
